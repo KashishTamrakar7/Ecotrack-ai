@@ -1,0 +1,134 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base reset ── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background-color: #F0F7F4;
+  color: #1A2E27;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Custom scrollbar ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #F0F7F4; }
+::-webkit-scrollbar-thumb { background: #00C97F; border-radius: 99px; }
+
+/* ── Utility layer ── */
+@layer utilities {
+  .font-display { font-family: 'Syne', sans-serif; }
+
+  /* Gradient text */
+  .text-gradient {
+    background: linear-gradient(90deg, #00C97F, #00A8E8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Glassmorphism panel */
+  .glass {
+    background: rgba(255,255,255,.72);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  /* Eco gradient backgrounds */
+  .bg-eco-gradient   { background: linear-gradient(135deg, #00C97F, #00A8E8); }
+  .bg-dark-gradient  { background: linear-gradient(135deg, #0D1F1A, #0A2F4A); }
+  .bg-admin-gradient { background: linear-gradient(120deg, #0A1628, #0D2442 55%, #082830 100%); }
+
+  /* Card hover lift */
+  .card-hover {
+    transition: transform .25s ease, box-shadow .25s ease;
+  }
+  .card-hover:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 48px rgba(0,0,0,.10);
+  }
+
+  /* Scan pulse border */
+  .scanning-border {
+    animation: scanPulse 1.5s ease-in-out infinite;
+  }
+}
+
+/* ── Component layer ── */
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold
+           text-white bg-eco-gradient transition-all duration-200
+           hover:-translate-y-0.5 hover:shadow-eco-glow active:scale-95
+           focus:outline-none focus:ring-2 focus:ring-eco-green/40;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold
+           bg-white border border-eco-border text-eco-dark transition-all duration-200
+           hover:bg-eco-bg hover:shadow-eco active:scale-95;
+  }
+  .btn-outline {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold
+           bg-transparent border-[1.5px] border-eco-green text-eco-green transition-all duration-200
+           hover:bg-eco-green/5 active:scale-95;
+  }
+  .btn-sm {
+    @apply px-3.5 py-1.5 text-xs rounded-lg;
+  }
+  .btn-lg {
+    @apply px-7 py-3.5 text-base rounded-2xl;
+  }
+
+  .eco-card {
+    @apply bg-white rounded-eco border border-eco-border p-6 card-hover;
+  }
+  .eco-input {
+    @apply w-full px-4 py-3 border-[1.5px] border-eco-border rounded-xl text-sm
+           font-sans outline-none transition-all duration-200 bg-white
+           focus:border-eco-green focus:ring-2 focus:ring-eco-green/10;
+  }
+
+  .badge-green  { @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700; }
+  .badge-blue   { @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-100 text-sky-700; }
+  .badge-yellow { @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700; }
+  .badge-red    { @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700; }
+  .badge-gray   { @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600; }
+
+  .nav-item {
+    @apply flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium
+           text-[#8BA99E] cursor-pointer transition-all duration-200
+           hover:bg-white/[.06] hover:text-white;
+  }
+  .nav-item-active {
+    @apply bg-gradient-to-r from-eco-green/20 to-eco-blue/15 text-eco-green;
+  }
+
+  .progress-bar {
+    @apply h-2 bg-emerald-100 rounded-full overflow-hidden;
+  }
+  .progress-fill {
+    @apply h-full rounded-full bg-eco-gradient transition-all duration-700;
+  }
+
+  .iot-chip {
+    @apply inline-flex items-center gap-1.5 bg-sky-100 text-sky-600
+           rounded-md px-2 py-0.5 text-[10px] font-bold;
+  }
+  .live-badge {
+    @apply inline-flex items-center gap-1.5 bg-emerald-500/15
+           border border-emerald-400/30 text-emerald-300
+           px-2.5 py-1 rounded-full text-[11px] font-bold;
+  }
+}
+
+/* ── Scan pulse keyframe (used via scanPulse class only) ── */
+@keyframes scanPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0,201,127,.3); }
+  50%      { box-shadow: 0 0 0 12px rgba(0,201,127,0); }
+}
