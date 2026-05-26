@@ -1,5 +1,4 @@
-# 🌿 EcoTrack AI
-# 🌿 EcoTrack AI
+# 🌿 EcoTrack AI 
 
 🔗 **[Live Demo Link](https://ecotrack-ai-n6v1.vercel.app/)**
 
