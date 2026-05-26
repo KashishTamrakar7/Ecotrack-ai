@@ -1,9 +1,17 @@
 "use client";
 
+import Chart from "chart.js/auto";
 import StatCard    from "@/components/ui/StatCard";
 import ProgressBar from "@/components/ui/ProgressBar";
 import { WeeklyBarChart } from "@/components/DashboardCharts";
 import { SCAN_HISTORY }   from "@/lib/appState";
+
+const MOCK_SCAN_HISTORY = [
+  { emoji: "🍾", label: "Plastic Bottle", ecoPoints: 10 },
+  { emoji: "📰", label: "Newspaper", ecoPoints: 5 },
+  { emoji: "🥫", label: "Aluminum Can", ecoPoints: 15 },
+  { emoji: "📦", label: "Cardboard Box", ecoPoints: 8 }
+];
 
 export default function DashboardPage({ navigate, showToast }) {
   return (
@@ -25,27 +33,33 @@ export default function DashboardPage({ navigate, showToast }) {
           </div>
           <div className="h-48"><WeeklyBarChart /></div>
         </div>
-
-        <div className="eco-card">
-          <h3 className="font-display font-bold text-sm mb-4">Your Eco Profile</h3>
-          <div className="flex items-center gap-4 mb-5">
-            <div className="w-16 h-16 rounded-[18px] bg-eco-gradient flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
-              AK
-            </div>
-            <div>
-              <p className="font-bold text-base">Alex Kumar</p>
-              <span className="inline-flex items-center gap-1.5 mt-1.5 px-3 py-1 bg-eco-green/10 border border-eco-green/20 rounded-full text-eco-green text-xs font-semibold">
-                🌍 Planet Protector
-              </span>
-            </div>
-          </div>
-          <div className="mb-4">
-            <div className="flex justify-between text-xs text-eco-muted mb-1.5">
-              <span>Level 14 → 15</span><span className="font-semibold">3,420 / 4,000 XP</span>
-            </div>
-            <div className="h-2 bg-emerald-100 rounded-full overflow-hidden">
-              <div className="h-full w-[85%] bg-eco-gradient rounded-full" />
-            </div>
+<div className="eco-card">
+  <h3 className="font-display font-bold text-sm mb-4">Your Eco Profile</h3>
+  <div className="flex items-center gap-4 mb-5">
+    {/* Profile Avatar: Initials automatically generate honge (e.g., Sneha Rao -> SR) */}
+    <div className="w-16 h-16 rounded-[18px] bg-eco-gradient flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
+      {typeof window !== 'undefined' && require("@/lib/firebaseConfig").auth.currentUser?.displayName 
+        ? require("@/lib/firebaseConfig").auth.currentUser.displayName.split(' ').map(n => n[0]).join('').toUpperCase()
+        : "AK"}
+    </div>
+    <div>
+      {/* User Name: Firebase se dynamic naam aayega, nahi to default Alex Kumar dikhayega */}
+      <p className="font-bold text-base">
+        {(typeof window !== 'undefined' && require("@/lib/firebaseConfig").auth.currentUser?.displayName) || "Alex Kumar"}
+      </p>
+      <span className="inline-flex items-center gap-1.5 mt-1.5 px-3 py-1 bg-eco-green/10 border border-eco-green/20 rounded-full text-eco-green text-xs font-semibold">
+        🌍 Planet Protector
+      </span>
+    </div>
+  </div>
+  <div className="mb-4">
+    <div className="flex justify-between text-xs text-eco-muted mb-1.5">
+      <span>Level 14 → 15</span><span className="font-semibold">3,420 / 4,000 XP</span>
+    </div>
+    <div className="h-2 bg-emerald-100 rounded-full overflow-hidden">
+      <div className="h-full w-[85%] bg-eco-gradient rounded-full" />
+    </div>
+  </div>
           </div>
           <div className="grid grid-cols-3 gap-3">
             {[["28","Day Streak","text-eco-green"],["12","Badges","text-eco-blue"],["5","Challenges","text-amber-600"]].map(([v,l,c]) => (
@@ -56,7 +70,6 @@ export default function DashboardPage({ navigate, showToast }) {
             ))}
           </div>
         </div>
-      </div>
 
       {/* Challenges + Recent scans */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -79,7 +92,7 @@ export default function DashboardPage({ navigate, showToast }) {
 
         <div className="eco-card">
           <h3 className="font-display font-bold text-sm mb-4">Recent Scans</h3>
-          {SCAN_HISTORY.slice(0,4).map((item, i) => (
+          {MOCK_SCAN_HISTORY.slice(0,4).map((item, i) => (
             <div key={i} className="flex items-center gap-3 py-2.5 border-b border-eco-border last:border-none">
               <span className="text-xl">{item.emoji}</span>
               <div className="flex-1 min-w-0">
