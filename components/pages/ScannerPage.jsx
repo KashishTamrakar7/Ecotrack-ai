@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { GEMINI_MOCK }      from "@/app/page";
+import { GEMINI_MOCK } from "@/app/page";
 
 const STEPS = [
   ["🔐 Authenticating Gemini API...",  "Validating API key scope · OAuth 2.0",       8],
@@ -16,31 +16,103 @@ const STEPS = [
 export default function ScannerPage({ navigate, showToast, setResult }) {
   const [stage,     setStage]    = useState("idle"); // idle | preview | analyzing
   const [fileName,  setFileName] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null); // Real file store karne ke liye
   const [stepIdx,   setStepIdx]  = useState(0);
   const [progress,  setProgress] = useState(0);
   const [dragging,  setDragging] = useState(false);
   const fileRef = useRef(null);
 
-  const loadFile = (name) => { setFileName(name); setStage("preview"); };
+  // File load karne ka dynamic function
+  const loadFile = (fileOrName) => {
+    if (typeof fileOrName === "string") {
+      setFileName(fileOrName);
+      setSelectedFile(null); // Demo mode
+    } else {
+      setFileName(fileOrName.name);
+      setSelectedFile(fileOrName); // Real Image mode
+    }
+    setStage("preview");
+  };
 
-  const startAnalysis = () => {
+  // Helper function to convert file to Base64 for Gemini
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result.split(",")[1]);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const startAnalysis = async () => {
     setStage("analyzing");
-    setStepIdx(0); setProgress(0);
+    setStepIdx(0); 
+    setProgress(0);
+
+    // Fake Loading Animation Loop
     let i = 0;
     const iv = setInterval(() => {
-      if (i < STEPS.length) {
+      if (i < STEPS.length - 1) {
         setStepIdx(i);
         setProgress(STEPS[i][2]);
         i++;
-      } else {
-        clearInterval(iv);
-        setResult(GEMINI_MOCK);
+      }
+    }, 400);
+
+    try {
+      let finalResult = GEMINI_MOCK; // Default fallback
+
+      // Agar user ne real image dali hai, toh Gemini AI ko sach mein call karenge!
+      if (selectedFile && process.env.NEXT_PUBLIC_GEMINI_API_KEY) {
+        const base64Data = await fileToBase64(selectedFile);
+        
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.NEXT_PUBLIC_GEMINI_API_KEY}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{
+                parts: [
+                  { inlineData: { mimeType: selectedFile.type, data: base64Data } },
+                  { text: "Analyze this image as waste. Return a clean JSON strictly matching this schema: { name: 'Item Name', type: 'Plastic'|'E-Waste'|'Paper'|'Glass'|'Metal'|'Organic', confidence: 95, ecoPoints: 15, co2Saved: 0.4, status: 'recycled'|'non-recyclable', binColor: 'blue'|'green'|'red'|'yellow', advice: 'Short advice here', info: 'Details here' }. Do not wrap in markdown code blocks." }
+                ]
+              }]
+            })
+          }
+        );
+
+        if (response.ok) {
+          const resData = await response.json();
+          let rawText = resData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+          // Safely clean codeblocks if Gemini mistakenly sends them
+          rawText = rawText.replace(/```json|```/g, "").trim();
+          finalResult = JSON.parse(rawText);
+        }
+      }
+
+      // Finish up animations
+      clearInterval(iv);
+      setStepIdx(STEPS.length - 1);
+      setProgress(100);
+
+      setTimeout(() => {
+        setResult(finalResult);
         setStage("idle");
         setFileName("");
-        showToast(`+${GEMINI_MOCK.ecoPoints} pts earned! ♻️`);
-        navigate("result");
-      }
-    }, 480);
+        setSelectedFile(null);
+        showToast(`+${finalResult.ecoPoints || 10} pts earned! ♻️`);
+        navigate("result"); // Result page par jao
+      }, 500);
+
+    } catch (error) {
+      clearInterval(iv);
+      console.error("Gemini Real-time analysis failed:", error);
+      // Fail hone par fallback to dummy data taaki app ruke na
+      setResult(GEMINI_MOCK);
+      setStage("idle");
+      navigate("result");
+    }
   };
 
   return (
@@ -53,7 +125,7 @@ export default function ScannerPage({ navigate, showToast, setResult }) {
       <div
         onDragOver={e => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
-        onDrop={e => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if(f) loadFile(f.name); }}
+        onDrop={e => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if(f) loadFile(f); }}
         onClick={() => stage === "idle" && fileRef.current?.click()}
         className={`relative rounded-[20px] p-12 text-center cursor-pointer transition-all duration-300 overflow-hidden
           border-2 border-dashed
@@ -61,7 +133,6 @@ export default function ScannerPage({ navigate, showToast, setResult }) {
           ${stage==="scanning" ? "border-eco-green scanning-border" : ""}
           ${stage==="idle"   ? "hover:border-eco-green hover:bg-eco-green/[.02]" : ""}`}
       >
-        {/* Scanning beam — only CSS animation, no inline keyframes */}
         {stage === "analyzing" && (
           <div className="absolute left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-eco-green to-transparent animate-scan-beam" />
         )}
@@ -82,15 +153,17 @@ export default function ScannerPage({ navigate, showToast, setResult }) {
 
         {stage === "preview" && (
           <div className="flex flex-col items-center gap-3">
-            <div className="text-[48px]">🧴</div>
+            <div className="text-[48px]">{selectedFile ? "📸" : "🧴"}</div>
             <p className="font-semibold text-sm">{fileName}</p>
             <p className="text-eco-muted text-xs">Image ready — click Analyze below</p>
+            <div className="flex gap-2 mt-2">
+               <button className="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-eco-dark font-medium" onClick={(e) => { e.stopPropagation(); setStage("idle"); setFileName(""); setSelectedFile(null); }}>❌ Cancel</button>
+            </div>
           </div>
         )}
 
         {stage === "analyzing" && (
           <div className="flex flex-col items-center gap-4 py-4">
-            {/* animate-spin from Tailwind — no raw CSS text */}
             <div className="w-16 h-16 border-[3px] border-eco-border border-t-eco-green rounded-full animate-spin" />
             <p className="font-semibold text-eco-green text-sm">{STEPS[stepIdx]?.[0]}</p>
             <p className="text-eco-muted text-xs">{STEPS[stepIdx]?.[1]}</p>
@@ -102,15 +175,13 @@ export default function ScannerPage({ navigate, showToast, setResult }) {
         )}
       </div>
 
-      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={e => { if(e.target.files[0]) loadFile(e.target.files[0].name); }} />
+      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={e => { if(e.target.files[0]) loadFile(e.target.files[0]); }} />
 
       {stage === "preview" && (
         <div className="text-center">
           <button onClick={startAnalysis} className="btn-primary btn-lg">🧠 Analyze with Gemini AI</button>
         </div>
       )}
-
-     {/* Code reference card hata diya */}
     </div>
   );
 }
