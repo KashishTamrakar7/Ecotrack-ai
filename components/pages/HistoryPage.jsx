@@ -3,17 +3,26 @@
 import { useState } from "react";
 import { SCAN_HISTORY } from "@/lib/appState";
 
-const TABS = ["All","Plastic","E-Waste","Paper"];
-const TYPE_BADGE = { Plastic:"blue", Paper:"green", "E-Waste":"red", Glass:"gray", Metal:"blue" };
+const TABS = ["All", "Plastic", "E-Waste", "Paper"];
+const TYPE_BADGE = { Plastic: "blue", Paper: "green", "E-Waste": "red", Glass: "gray", Metal: "blue" };
 
 export default function HistoryPage() {
   const [search, setSearch] = useState("");
-  const [tab,    setTab]    = useState("All");
+  const [tab, setTab] = useState("All");
 
-  const filtered = SCAN_HISTORY.filter(item => {
-    const matchSearch = item.name.toLowerCase().includes(search.toLowerCase()) ||
-                        item.type.toLowerCase().includes(search.toLowerCase());
-    const matchTab    = tab === "All" || item.type === tab;
+  // Safe check: Agar SCAN_HISTORY khali ya undefined ho toh khali array use karein
+  const historyList = SCAN_HISTORY || [];
+
+  const filtered = historyList.filter(item => {
+    if (!item) return false;
+
+    // Optional chaining (?) aur default fallback ('') taaki kabhi toLowerCase() crash na ho
+    const itemName = item.name || "";
+    const itemType = item.type || "";
+
+    const matchSearch = itemName.toLowerCase().includes(search.toLowerCase()) ||
+                        itemType.toLowerCase().includes(search.toLowerCase());
+    const matchTab    = tab === "All" || itemType === tab;
     return matchSearch && matchTab;
   });
 
@@ -48,17 +57,17 @@ export default function HistoryPage() {
             className="flex items-center gap-4 p-4 bg-white rounded-xl border border-eco-border
                        transition-all duration-200 hover:shadow-eco hover:translate-x-1 cursor-pointer">
             <div className="w-12 h-12 rounded-xl bg-eco-bg flex items-center justify-center text-2xl flex-shrink-0">
-              {item.emoji}
+              {item?.emoji || "🗑️"}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-bold text-sm">{item.name}</p>
-              <p className="text-xs text-eco-muted mt-0.5">{item.date}</p>
-              <span className={`badge-${TYPE_BADGE[item.type]||"gray"} mt-1.5`}>{item.type}</span>
+              <p className="font-bold text-sm">{item?.name || "Unknown Item"}</p>
+              <p className="text-xs text-eco-muted mt-0.5">{item?.date || "No date"}</p>
+              <span className={`badge-${TYPE_BADGE[item?.type] || "gray"} mt-1.5`}>{item?.type || "Other"}</span>
             </div>
             <div className="text-right flex-shrink-0">
-              <p className="font-bold text-eco-green">+{item.pts} pts</p>
-              <span className={`mt-1.5 ${item.status==="recycled"?"badge-green":"badge-yellow"}`}>
-                {item.status==="recycled"?"♻️ Recycled":"⚡ Special"}
+              <p className="font-bold text-eco-green">+{item?.pts || 0} pts</p>
+              <span className={`mt-1.5 ${item?.status === "recycled" ? "badge-green" : "badge-yellow"}`}>
+                {item?.status === "recycled" ? "♻️ Recycled" : "⚡ Special"}
               </span>
             </div>
           </div>

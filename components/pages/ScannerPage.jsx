@@ -110,30 +110,7 @@ export default function ScannerPage({ navigate, showToast, setResult }) {
         </div>
       )}
 
-      {/* Code reference card */}
-      <div className="eco-card">
-        <h3 className="font-display font-bold text-sm mb-3">🛠️ Gemini API — Production Schema</h3>
-        <p className="text-xs text-eco-muted leading-relaxed mb-3">
-          Images are sent as base64 to the Gemini Vision endpoint. The model returns structured JSON with waste
-          classification, disposal protocol, and carbon impact — then persisted to Firestore.
-        </p>
-        <pre className="bg-eco-dark rounded-xl p-4 text-[11px] text-emerald-300 leading-relaxed overflow-x-auto">
-{`// geminiService.js
-export const analyzeWaste = async (base64, mime) => {
-  const res = await fetch(\`\${GEMINI_URL}?key=\${API_KEY}\`, {
-    method: 'POST',
-    body: JSON.stringify({ contents: [{ parts: [
-      { inlineData: { mimeType: mime, data: base64 } },
-      { text: WASTE_PROMPT }  // returns JSON
-    ]}]})
-  });
-  if (!res.ok) throw new Error(\`Gemini \${res.status}\`);
-  const text = (await res.json())
-    .candidates[0].content.parts[0].text;
-  return JSON.parse(text.replace(/\`\`\`json|\`\`\`/g, ''));
-};`}
-        </pre>
-      </div>
+     {/* Code reference card hata diya */}
     </div>
   );
 }
