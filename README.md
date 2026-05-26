@@ -1,22 +1,30 @@
-# 🌿 EcoTrack AI — Smart Sustainability Platform
+# 🌿 EcoTrack AI
 
-**AI-powered waste scanning, eco mapping, and smart city recycling dashboard.**
+EcoTrack AI is a smart sustainability platform designed to improve urban waste management using AI, real-time tracking, and location-based recycling insights.
 
-Built for the **GDG Hackathon** · Powered by **Gemini AI · Firebase · Google Maps API**
+It helps users classify waste using AI, find nearby recycling centers, and visualize smart bin data through an interactive dashboard.
 
 ---
 
-## 🚀 Tech Stack
+## 🚀 Features
 
-| Layer       | Technology                              |
-|-------------|------------------------------------------|
-| Framework   | Next.js 14 (App Router)                  |
-| Styling     | Tailwind CSS 3                           |
-| Charts      | Chart.js 4 + react-chartjs-2            |
-| AI          | Google Gemini API (gemini-2.0-flash)     |
-| Auth/DB     | Firebase Auth + Firestore + Storage      |
-| Maps        | Google Maps Platform + Distance Matrix   |
-| IoT Sim     | Custom simulation engine (iotEngine.js)  |
+- ♻️ AI-based waste classification (Google Gemini API)
+- 📍 Find nearby recycling centers using Google Maps API
+- 🗑️ Smart bin level tracking (IoT simulation engine)
+- 📊 Analytics dashboard with Chart.js
+- 🔐 Authentication and secure data storage using Firebase
+- ☁️ Real-time database updates with Firestore
+
+---
+
+## 🛠️ Tech Stack
+
+**Frontend:** Next.js 14 (App Router), Tailwind CSS  
+**Backend & Database:** Firebase Auth, Firestore, Firebase Storage  
+**AI Integration:** Google Gemini API (gemini-2.0-flash)  
+**Maps:** Google Maps Platform + Distance Matrix API  
+**Charts:** Chart.js + react-chartjs-2  
+**IoT Simulation:** Custom iotEngine.js
 
 ---
 
