@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Sidebar   from "@/components/Sidebar";
-import Topbar    from "@/components/Topbar";
+import SideBar   from "@/components/SideBar";
+import TopBar    from "@/components/TopBar";
 import ChatBot   from "@/components/ChatBot";
 import Toast     from "@/components/ui/Toast";
 
