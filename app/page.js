@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react"; // useEffect add kiya browser back track karne ke liye
 import SideBar   from "@/components/SideBar";
 import TopBar    from "@/components/TopBar";
 import ChatBot   from "@/components/ChatBot";
@@ -43,7 +43,7 @@ const PAGE_SUBS = {
   auth:        "Sign in to your account",
 };
 
-// Gemini mock result — replace with live analyzeWaste() call in production
+// Fallback/Mock Data for scanner dependency
 export const GEMINI_MOCK = {
   wasteType:     "PET Plastic Bottle",
   material:      "Polyethylene Terephthalate (PET #1)",
@@ -66,6 +66,25 @@ export default function Home() {
   const [result,  setResult]  = useState(GEMINI_MOCK);
   const [notifOpen, setNotifOpen] = useState(false);
 
+  // 🌍 JADU: Browser ke Asli Back Button ko handle karne ke liye smart hack
+  useEffect(() => {
+    // Jab app load ho, ek state push kar do history mein
+    window.history.pushState({ page: "dashboard" }, "");
+
+    const handlePopState = (event) => {
+      // Agar user browser ka back button dabaye
+      if (page !== "dashboard") {
+        // App ko crash karne ke bajaye dashboard par navigate kar do!
+        setPage("dashboard");
+        // Browser ko page chhodne se roko
+        window.history.pushState({ page: "dashboard" }, "");
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [page]);
+
   const showToast = (msg) => {
     setToast(msg);
     setTimeout(() => setToast(null), 2800);
@@ -74,21 +93,23 @@ export default function Home() {
   const navigate = (p) => {
     setPage(p);
     setNotifOpen(false);
+    // Har navigation par history mein state save karo taaki back sync rahe
+    window.history.pushState({ page: p }, "");
   };
 
   const isAuth = page === "auth";
 
   const pages = {
-    dashboard:   <DashboardPage   navigate={navigate} showToast={showToast} />,
-    scanner:     <ScannerPage     navigate={navigate} showToast={showToast} setResult={setResult} />,
-    result:      <ResultPage      navigate={navigate} showToast={showToast} result={result} />,
-    map:         <MapPage         navigate={navigate} showToast={showToast} />,
+    dashboard:   <DashboardPage  navigate={navigate} showToast={showToast} />,
+    scanner:     <ScannerPage    navigate={navigate} showToast={showToast} setResult={setResult} />,
+    result:      <ResultPage     navigate={navigate} showToast={showToast} result={result} />,
+    map:         <MapPage        navigate={navigate} showToast={showToast} />,
     analytics:   <AnalyticsPage  />,
     leaderboard: <LeaderboardPage />,
     rewards:     <RewardsPage    />,
     history:     <HistoryPage    />,
     admin:       <AdminPage      showToast={showToast} />,
-    auth:        <AuthPage        navigate={navigate} showToast={showToast} />,
+    auth:        <AuthPage       navigate={navigate} showToast={showToast} />,
   };
 
   return (
