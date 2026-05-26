@@ -18,7 +18,7 @@ const NAV = [
   { id: "auth",        icon: "👤", label: "Account", bottom: true },
 ];
 
-export default function Sidebar({ currentPage, navigate }) {
+export default function SideBar({ currentPage, navigate }) {
   return (
     <aside className="fixed top-0 left-0 h-screen w-[240px] bg-eco-dark flex flex-col z-50 overflow-y-auto">
       {/* Logo */}
