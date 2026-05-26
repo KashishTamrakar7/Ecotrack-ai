@@ -57,36 +57,25 @@ EcoTrack AI addresses these issues using AI-driven classification and smart city
 
 ## 📁 Project Structure
 
+## 📁 Project Structure
+
+```text
 ecotrack-ai/
-├── app/                        # Next.js App Router
-│   ├── layout.js               # Root HTML layout
-│   ├── page.js                 # Main app shell + page router
-│   └── globals.css             # Tailwind directives + design tokens
+├── app/
+│   ├── globals.css          # Global styles and Tailwind directives
+│   ├── layout.js             # Main layout wrapper
+│   └── page.js               # Application entry point and page router
 ├── components/
-│   ├── Sidebar.jsx             # Fixed navigation sidebar
-│   ├── Topbar.jsx              # Top bar + notification panel
-│   ├── ChatBot.jsx             # Floating EcoBot AI chatbot
-│   ├── EcoMap.jsx              # Premium vector city map component
-│   ├── DashboardCharts.jsx     # Chart.js chart components
-│   ├── pages/                  # Full page components
-│   │   ├── DashboardPage.jsx
-│   │   ├── ScannerPage.jsx     # AI scanner with Gemini loading states
-│   │   ├── ResultPage.jsx      # Scan result + JSON panel
-│   │   ├── MapPage.jsx
-│   │   ├── HistoryPage.jsx
-│   │   ├── RewardsPage.jsx
-│   │   ├── LeaderboardPage.jsx
-│   │   ├── AnalyticsPage.jsx
-│   │   ├── AdminPage.jsx       # Smart city IoT dashboard
-│   │   └── AuthPage.jsx        # Firebase Auth (email + Google)
-│   └── ui/
-│       ├── StatCard.jsx
-│       ├── Badge.jsx
-│       ├── ProgressBar.jsx
-│       └── Toast.jsx
+│   ├── pages/                # App views (Dashboard, Scanner, Map, Leaderboard, etc.)
+│   ├── ui/                   # Reusable UI elements (Cards, Badges, Toasts)
+│   ├── ChatBot.jsx           # Floating AI assistant component
+│   ├── DashboardCharts.jsx   # Analytics charts
+│   ├── EcoMap.jsx            # City map component
+│   ├── Sidebar.jsx           # Sidebar navigation
+│   └── Topbar.jsx            # Top profile bar
 ├── lib/
-│   ├── appState.js             # Global state + Firestore schema docs
-│   ├── geminiService.js        # Gemini Vision API service
-│   ├── firebaseConfig.js       # Firebase SDK config + helpers
-│   └── iotEngine.js            # IoT simulation engine
-└── tailwind.config.js          # Design system tokens + animations
+│   ├── firebaseConfig.js     # Firebase client SDK initialization
+│   ├── geminiService.js      # Google Gemini API integration
+│   └── iotEngine.js          # IoT simulation engine logic
+├── tailwind.config.js        # Custom theme settings and animations
+└── package.json
