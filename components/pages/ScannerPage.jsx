@@ -72,23 +72,68 @@ export default function ScannerPage({ navigate, showToast, setResult }) {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              contents: [{
-                parts: [
-                  { inlineData: { mimeType: selectedFile.type, data: base64Data } },
-                  { text: "Analyze this image as waste. Return a clean JSON strictly matching this schema: { name: 'Item Name', type: 'Plastic'|'E-Waste'|'Paper'|'Glass'|'Metal'|'Organic', confidence: 95, ecoPoints: 15, co2Saved: 0.4, status: 'recycled'|'non-recyclable', binColor: 'blue'|'green'|'red'|'yellow', advice: 'Short advice here', info: 'Details here' }. Do not wrap in markdown code blocks." }
-                ]
-              }]
-            })
-          }
-        );
+              contents: [{ parts: [ { inlineData: { mimeType: selectedFile.type, data: base64Data } },
+                {
+  text: `
+Analyze the uploaded image and identify the waste item.
 
-        if (response.ok) {
-          const resData = await response.json();
-          let rawText = resData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-          // Safely clean codeblocks if Gemini mistakenly sends them
-          rawText = rawText.replace(/```json|```/g, "").trim();
-          finalResult = JSON.parse(rawText);
-        }
+Return ONLY valid JSON.
+
+Schema:
+{
+  "name": "Item Name",
+  "type": "Plastic | E-Waste | Paper | Glass | Metal | Organic",
+  "confidence": 95,
+  "ecoPoints": 15,
+  "co2Saved": 0.4,
+  "status": "recycled | non-recyclable",
+  "binColor": "blue | green | red | yellow",
+  "advice": "short disposal advice",
+  "info": "1 line explanation"
+}
+
+No markdown.
+No extra text.
+Only JSON.
+`}
+          ]
+       }]
+     })
+   }
+ );
+
+ if (response.ok) { const resData = await response.json();
+
+  let rawText =
+    resData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+  console.log("RAW GEMINI RESPONSE:", rawText);
+
+  // Clean markdown
+  rawText = rawText
+    .replace(/```json/g, "")
+    .replace(/```/g, "")
+    .trim();
+
+  try {
+    finalResult = JSON.parse(rawText);
+  } catch (parseError) {
+    console.error("JSON Parse Failed:", parseError);
+
+    // Fallback dynamic result
+    finalResult = {
+      name: "Unknown Waste",
+      type: "General",
+      confidence: 70,
+      ecoPoints: Math.floor(Math.random() * 40) + 10,
+      co2Saved: (Math.random() * 2).toFixed(2),
+      status: "non-recyclable",
+      binColor: "red",
+      advice: "Please dispose responsibly.",
+      info: "AI could not fully classify this item."
+    };
+  }
+}
       }
 
       // Finish up animations
