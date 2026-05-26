@@ -97,10 +97,10 @@ export default function Home() {
         <div className="min-h-screen">{pages.auth}</div>
       ) : (
         <div className="flex min-h-screen">
-          <Sidebar currentPage={page} navigate={navigate} />
+          <SideBar currentPage={page} navigate={navigate} />
 
           <div className="ml-[240px] flex-1 min-h-screen">
-            <Topbar
+            <TopBar
               title={PAGE_TITLES[page]}
               subtitle={PAGE_SUBS[page]}
               navigate={navigate}
