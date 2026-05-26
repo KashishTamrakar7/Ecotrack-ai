@@ -100,4 +100,5 @@ export default function ResultPage({ navigate, showToast, result }) {
       </div>
     </div>
   );
+
 }
