@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SideBar   from "@/components/SideBar";
 import TopBar    from "@/components/TopBar";
 import ChatBot   from "@/components/ChatBot";
@@ -17,78 +17,54 @@ import AnalyticsPage  from "@/components/pages/AnalyticsPage";
 import AdminPage      from "@/components/pages/AdminPage";
 import AuthPage       from "@/components/pages/AuthPage";
 
-const PAGE_TITLES = {
-  dashboard:   "Dashboard",
-  scanner:     "AI Scanner",
-  result:      "Scan Result",
-  map:         "Eco Map",
-  analytics:   "Analytics",
-  leaderboard: "Leaderboard",
-  rewards:     "Rewards & Profile",
-  history:     "Scan History",
-  admin:       "Smart City Dashboard",
-  auth:        "Account",
-};
-
-const PAGE_SUBS = {
-  dashboard:   "Welcome back, Alex 👋",
-  scanner:     "Identify & recycle smarter with Gemini AI",
-  result:      "AI analysis complete ✅",
-  map:         "Find recycling centers near you",
-  analytics:   "Your environmental impact",
-  leaderboard: "Compete & inspire change",
-  rewards:     "Your eco journey & achievements",
-  history:     "All your scans in one place",
-  admin:       "City sustainability control center · IoT Live",
-  auth:        "Sign in to your account",
-};
-
-// Gemini mock result — replace with live analyzeWaste() call in production
-export const GEMINI_MOCK = {
-  wasteType:     "PET Plastic Bottle",
-  material:      "Polyethylene Terephthalate (PET #1)",
-  recyclable:    true,
-  binColor:      "blue",
-  disposalSteps: [
-    "Remove cap — may be PP #5; recycle separately or discard",
-    "Rinse bottle with a small amount of water to remove residue",
-    "Squeeze flat to save space in the recycling bin",
-    "Place in the blue recycling bin or bring to nearest plastic depot",
-  ],
-  carbonImpact: 0.08,
-  ecoPoints:    25,
-  confidence:   0.96,
-};
-
 export default function Home() {
-  const [page,    setPage]    = useState("dashboard");
-  const [toast,   setToast]   = useState(null);
+  const [page, setPage] = useState("dashboard");
+  const [toast, setToast] = useState(null);
   const [result, setResult] = useState(null);
   const [notifOpen, setNotifOpen] = useState(false);
+
+  // 🎯 BROWSER BACK BUTTON FIX: Yeh browser ko back jaane se rokega aur app ke andar hi navigate karega
+  useEffect(() => {
+    // Shuruat mein history state reset karo
+    window.history.replaceState({ page: "dashboard" }, "");
+
+    const handlePopState = (event) => {
+      if (event.state && event.state.page) {
+        setPage(event.state.page);
+      } else {
+        setPage("dashboard");
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   const showToast = (msg) => {
     setToast(msg);
     setTimeout(() => setToast(null), 2800);
   };
 
+  // 🎯 NAVIGATION JADU: Jab bhi page badlega, browser ki history mein save hoga
   const navigate = (p) => {
     setPage(p);
     setNotifOpen(false);
+    window.history.pushState({ page: p }, "", p === "dashboard" ? "/" : `#${p}`);
   };
 
   const isAuth = page === "auth";
 
   const pages = {
-    dashboard:   <DashboardPage   navigate={navigate} showToast={showToast} />,
-    scanner:     <ScannerPage     navigate={navigate} showToast={showToast} setResult={setResult} />,
-    result:      <ResultPage      navigate={navigate} showToast={showToast} result={result} />,
-    map:         <MapPage         navigate={navigate} showToast={showToast} />,
+    dashboard:   <DashboardPage  navigate={navigate} showToast={showToast} />,
+    scanner:     <ScannerPage    navigate={navigate} showToast={showToast} setResult={setResult} />,
+    result:      <ResultPage     navigate={navigate} showToast={showToast} result={result} />,
+    map:         <MapPage        navigate={navigate} showToast={showToast} />,
     analytics:   <AnalyticsPage  />,
     leaderboard: <LeaderboardPage />,
     rewards:     <RewardsPage    />,
     history:     <HistoryPage    />,
     admin:       <AdminPage      showToast={showToast} />,
-    auth:        <AuthPage        navigate={navigate} showToast={showToast} />,
+    auth:        <AuthPage       navigate={navigate} showToast={showToast} />,
   };
 
   return (
@@ -101,8 +77,8 @@ export default function Home() {
 
           <div className="ml-[240px] flex-1 min-h-screen">
             <TopBar
-              title={PAGE_TITLES[page]}
-              subtitle={PAGE_SUBS[page]}
+              title={page === "result" ? "AI Analysis Result" : "EcoTrack AI"}
+              subtitle={page === "result" ? "AI analysis complete ✅" : "Identify & recycle smarter"}
               navigate={navigate}
               notifOpen={notifOpen}
               setNotifOpen={setNotifOpen}
@@ -115,10 +91,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* Floating ChatBot — rendered outside layout so it never overlaps */}
       {!isAuth && <ChatBot showToast={showToast} />}
-
-      {/* Global Toast */}
       {toast && <Toast message={toast} />}
     </>
   );
