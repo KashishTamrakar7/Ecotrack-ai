@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Sidebar   from "@/components/Sidebar";
-import Topbar    from "@/components/Topbar";
+import SideBar   from "@/components/SideBar";
+import TopBar    from "@/components/TopBar";
 import ChatBot   from "@/components/ChatBot";
 import Toast     from "@/components/ui/Toast";
 
@@ -97,10 +97,10 @@ export default function Home() {
         <div className="min-h-screen">{pages.auth}</div>
       ) : (
         <div className="flex min-h-screen">
-          <Sidebar currentPage={page} navigate={navigate} />
+          <SideBar currentPage={page} navigate={navigate} />
 
           <div className="ml-[240px] flex-1 min-h-screen">
-            <Topbar
+            <TopBar
               title={PAGE_TITLES[page]}
               subtitle={PAGE_SUBS[page]}
               navigate={navigate}
