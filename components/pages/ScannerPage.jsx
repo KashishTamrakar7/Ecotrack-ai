@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 
-// 🚀 LIVE MULTIMODAL PROMPT: Gemini ko strictly bound karne ke liye taaki woh dynamic JSON de
+// 🚀 LIVE MULTIMODAL PROMPT
 const GEMINI_PROMPT = `
 You are an advanced real-time waste classification system. Analyze the uploaded image object and return ONLY a valid JSON object matching the exact schema below. Do not wrap in markdown fences, do not write explanations.
 
@@ -11,7 +11,7 @@ Required Schema:
   "wasteType": "Exact specific name of the item detected in the image",
   "material": "Dominant material composition",
   "recyclable": true or false,
-  "binColor": "blue" (for paper/plastic/metal) | "green" (for organic/glass) | "yellow" (for e-waste) | "black" (for landfill),
+  "binColor": "blue" | "green" | "yellow" | "black",
   "ecoPoints": 25,
   "carbonImpact": 0.06,
   "disposalSteps": [
@@ -22,7 +22,7 @@ Required Schema:
 }
 `.trim();
 
-// 🌍 INTELLECTUAL HYBRID POOL: Active only if your Gemini API hits 429 Rate Limits
+// 🌍 INTELLECTUAL HYBRID POOL
 const HYBRID_FALLBACK_DB = {
   bottle: { wasteType: "PET Plastic Bottle", material: "Polyethylene Terephthalate (PET #1)", recyclable: true, binColor: "blue", ecoPoints: 30, carbonImpact: 0.12, disposalSteps: ["Remove bottle cap before recycling", "Rinse bottle with water", "Compress bottle to save space", "Place in blue recycling bin"] },
   can: { wasteType: "Aluminium Beverage Can", material: "Aluminium Alloy", recyclable: true, binColor: "blue", ecoPoints: 35, carbonImpact: 0.18, disposalSteps: ["Wash the can lightly", "Crush if possible to save volumetric space", "Do not mix with wet organic waste", "Place in metal recycling bin"] },
@@ -117,10 +117,9 @@ export default function ScannerPage({ navigate, showToast, setResult }) {
         }
       }
     } catch (err) {
-      console.error("Using backup protocol trace:", err);
+      console.error("Backup system track:", err);
     }
 
-    // Smart Fallback System
     if (!finalPayload) {
       let fallbackKey = activeItemKey;
       if (file) {
@@ -150,10 +149,10 @@ export default function ScannerPage({ navigate, showToast, setResult }) {
   return (
     <div className="w-full max-w-[720px] mx-auto flex flex-col gap-4 sm:gap-6 px-2 sm:px-0">
       
-      {/* QUICK SELECTION TABS (Fully Responsive Grid Layout) */}
+      {/* QUICK SELECTION TABS */}
       <div className="bg-white p-4 sm:p-5 rounded-[20px] border border-eco-border shadow-sm">
         <label className="text-[11px] sm:text-xs font-bold uppercase mb-3 block text-gray-500 tracking-wider">
-          🎯 Target Quick Selection Framework (7 Options)
+          🎯 Quick Item Selection
         </label>
         <div className="grid grid-cols-3 sm:grid-cols-7 gap-1.5 sm:gap-2">
           {[
@@ -173,7 +172,7 @@ export default function ScannerPage({ navigate, showToast, setResult }) {
                 setFileName(`mock_${item.id}_frame.jpg`);
                 setPreviewUrl(""); 
                 setStage("preview");
-                showToast?.(`Locked Target Matrix: ${item.label}`);
+                showToast?.(`Selected target: ${item.label}`);
               }}
               className={`px-1 py-2 sm:py-3 rounded-xl text-[10px] sm:text-xs border capitalize transition-all truncate text-center
                 ${activeItemKey === item.id && stage === "preview" && !previewUrl
@@ -187,7 +186,7 @@ export default function ScannerPage({ navigate, showToast, setResult }) {
         </div>
       </div>
 
-      {/* UPLOAD CORE COMPONENT (Responsive Sizing) */}
+      {/* UPLOAD CORE COMPONENT */}
       <div
         onClick={() => stage === "idle" && fileInputRef.current?.click()}
         className="p-6 sm:p-12 text-center border-2 border-dashed rounded-[20px] bg-white cursor-pointer hover:bg-gray-50 transition-colors"
