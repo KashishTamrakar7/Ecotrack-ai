@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react"; // useEffect add kiya browser back track karne ke liye
-import SideBar   from "@/components/SideBar";
-import TopBar    from "@/components/TopBar";
+import { useState } from "react";
+import Sidebar   from "@/components/Sidebar";
+import Topbar    from "@/components/Topbar";
 import ChatBot   from "@/components/ChatBot";
 import Toast     from "@/components/ui/Toast";
 
@@ -43,7 +43,7 @@ const PAGE_SUBS = {
   auth:        "Sign in to your account",
 };
 
-// Fallback/Mock Data for scanner dependency
+// Gemini mock result — replace with live analyzeWaste() call in production
 export const GEMINI_MOCK = {
   wasteType:     "PET Plastic Bottle",
   material:      "Polyethylene Terephthalate (PET #1)",
@@ -63,27 +63,8 @@ export const GEMINI_MOCK = {
 export default function Home() {
   const [page,    setPage]    = useState("dashboard");
   const [toast,   setToast]   = useState(null);
-  const [result,  setResult]  = useState(GEMINI_MOCK);
+  const [result, setResult] = useState(null);
   const [notifOpen, setNotifOpen] = useState(false);
-
-  // 🌍 JADU: Browser ke Asli Back Button ko handle karne ke liye smart hack
-  useEffect(() => {
-    // Jab app load ho, ek state push kar do history mein
-    window.history.pushState({ page: "dashboard" }, "");
-
-    const handlePopState = (event) => {
-      // Agar user browser ka back button dabaye
-      if (page !== "dashboard") {
-        // App ko crash karne ke bajaye dashboard par navigate kar do!
-        setPage("dashboard");
-        // Browser ko page chhodne se roko
-        window.history.pushState({ page: "dashboard" }, "");
-      }
-    };
-
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, [page]);
 
   const showToast = (msg) => {
     setToast(msg);
@@ -93,23 +74,21 @@ export default function Home() {
   const navigate = (p) => {
     setPage(p);
     setNotifOpen(false);
-    // Har navigation par history mein state save karo taaki back sync rahe
-    window.history.pushState({ page: p }, "");
   };
 
   const isAuth = page === "auth";
 
   const pages = {
-    dashboard:   <DashboardPage  navigate={navigate} showToast={showToast} />,
-    scanner:     <ScannerPage    navigate={navigate} showToast={showToast} setResult={setResult} />,
-    result:      <ResultPage     navigate={navigate} showToast={showToast} result={result} />,
-    map:         <MapPage        navigate={navigate} showToast={showToast} />,
+    dashboard:   <DashboardPage   navigate={navigate} showToast={showToast} />,
+    scanner:     <ScannerPage     navigate={navigate} showToast={showToast} setResult={setResult} />,
+    result:      <ResultPage      navigate={navigate} showToast={showToast} result={result} />,
+    map:         <MapPage         navigate={navigate} showToast={showToast} />,
     analytics:   <AnalyticsPage  />,
     leaderboard: <LeaderboardPage />,
     rewards:     <RewardsPage    />,
     history:     <HistoryPage    />,
     admin:       <AdminPage      showToast={showToast} />,
-    auth:        <AuthPage       navigate={navigate} showToast={showToast} />,
+    auth:        <AuthPage        navigate={navigate} showToast={showToast} />,
   };
 
   return (
@@ -118,10 +97,10 @@ export default function Home() {
         <div className="min-h-screen">{pages.auth}</div>
       ) : (
         <div className="flex min-h-screen">
-          <SideBar currentPage={page} navigate={navigate} />
+          <Sidebar currentPage={page} navigate={navigate} />
 
           <div className="ml-[240px] flex-1 min-h-screen">
-            <TopBar
+            <Topbar
               title={PAGE_TITLES[page]}
               subtitle={PAGE_SUBS[page]}
               navigate={navigate}

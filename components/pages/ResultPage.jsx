@@ -9,7 +9,22 @@ export default function ResultPage({ navigate, showToast, result }) {
   const [jsonOpen, setJsonOpen] = useState(false);
   const [saved,    setSaved]    = useState(false);
 
-  if (!result) return null;
+ if (!result) {
+  return (
+    <div className="text-center py-20">
+      <h2 className="text-2xl font-bold mb-3">
+        No Scan Data Found
+      </h2>
+
+      <button
+        onClick={() => navigate("scanner")}
+        className="btn-primary"
+      >
+        📷 Start New Scan
+      </button>
+    </div>
+  );
+}
 
   return (
     <div className="max-w-[760px] mx-auto flex flex-col gap-5">

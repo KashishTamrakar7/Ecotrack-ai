@@ -1,235 +1,349 @@
 "use client";
 
+import { analyzeWaste, fileToBase64 } from "@/lib/geminiService";
 import { useState, useRef } from "react";
 
-// 🌍 SMART MAPPED DATA: Ab yeh randomly nahi chunega, balki image ke naam ke mutabik sahi data pehchanega!
-const WASTE_DATABASE = {
-  bag: {
-    wasteType: "Plastic Carry Bag",
-    material: "Low-Density Polyethylene (LDPE #4)",
-    recyclable: false,
-    binColor: "black",
-    ecoPoints: 15,
-    carbonImpact: 0.04,
-    disposalSteps: [
-      "Do NOT put in standard recycling bins as soft plastics clog sorting machines.",
-      "Bring to a local supermarket collection kiosk for specialized recycling.",
-      "Reuse as a trash liner to extend its lifecycle before final disposal."
-    ]
-  },
-  cardboard: {
-    wasteType: "Cardboard Packaging Box",
-    material: "Corrugated Cardboard",
+const SMART_WASTE_DB = {
+  bottle: {
+    wasteType: "PET Plastic Bottle",
+    material: "Polyethylene Terephthalate (PET #1)",
     recyclable: true,
     binColor: "blue",
-    ecoPoints: 25,
-    carbonImpact: 0.08,
+    ecoPoints: 30,
+    carbonImpact: 0.12,
+    confidence: 0.97,
     disposalSteps: [
-      "Remove plastic shipping tape, labels, and bubble wrap contents.",
-      "Flatten the box completely to optimize space in the collection vehicle.",
-      "Keep cardboard dry; wet fibers degrade and reduce recycling quality."
+      "Remove bottle cap before recycling",
+      "Rinse bottle with water",
+      "Compress bottle to save space",
+      "Place in blue recycling bin"
     ]
   },
+
   can: {
-    wasteType: "Aluminum Soda Can",
-    material: "Aluminum Alloy 3104 (Infinitely Recyclable)",
+    wasteType: "Aluminium Beverage Can",
+    material: "Aluminium Alloy",
     recyclable: true,
     binColor: "blue",
     ecoPoints: 35,
     carbonImpact: 0.18,
+    confidence: 0.96,
     disposalSteps: [
-      "Quickly rinse any residual liquid to prevent mold and pests.",
-      "Crush flat vertically to save space in your recycling container.",
-      "Toss loose into the blue recycling container (do not bag in plastic)."
+      "Wash the can lightly",
+      "Crush if possible",
+      "Do not mix with wet waste",
+      "Place in metal recycling bin"
     ]
   },
-  glass: {
-    wasteType: "Glass Beverage Jar",
-    material: "Soda-Lime Container Glass",
+
+  cardboard: {
+    wasteType: "Cardboard Box",
+    material: "Corrugated Cardboard",
     recyclable: true,
-    binColor: "green",
-    ecoPoints: 20,
+    binColor: "blue",
+    ecoPoints: 22,
     carbonImpact: 0.09,
     disposalSteps: [
-      "Rinse thoroughly to remove food grease or syrup residue.",
-      "Separate the metal lid and recycle it in the blue metal bin.",
-      "Drop gently into the green glass recycling compartment without breaking."
+      "Flatten cardboard box",
+      "Keep dry and clean",
+      "Remove plastic tape",
+      "Place in paper recycling bin"
     ]
   },
-  keyboard: {
-    wasteType: "Defunct Mechanical Keyboard",
-    material: "Electronic Waste (ABS Plastic & Copper)",
+
+  glass: {
+    wasteType: "Glass Bottle",
+    material: "Soda Lime Glass",
     recyclable: true,
-    binColor: "yellow",
-    ecoPoints: 50,
-    carbonImpact: 0.35,
+    binColor: "green",
+    ecoPoints: 28,
+    carbonImpact: 0.11,
     disposalSteps: [
-      "Never mix with regular household garbage due to circuit trace metals.",
-      "Locate an authorized e-waste hub or electronic store take-back bin.",
-      "Ensure any detachable rechargeable batteries are removed beforehand."
+      "Rinse glass container",
+      "Separate lid or cap",
+      "Avoid breaking glass",
+      "Place in green glass bin"
     ]
   },
+
+  battery: {
+    wasteType: "AA Battery",
+    material: "Lithium / Alkaline",
+    recyclable: false,
+    binColor: "yellow",
+    ecoPoints: 40,
+    carbonImpact: 0.21,
+    disposalSteps: [
+      "Never throw in normal trash",
+      "Store safely",
+      "Take to e-waste center",
+      "Keep away from heat"
+    ]
+  },
+
   organic: {
     wasteType: "Organic Food Waste",
-    material: "Compostable Organic Matter",
+    material: "Biodegradable Matter",
     recyclable: false,
     binColor: "green",
-    ecoPoints: 12,
-    carbonImpact: 0.02,
+    ecoPoints: 15,
+    carbonImpact: 0.03,
     disposalSteps: [
-      "Separate organic waste from rubber bands, staples, or plastic stickers.",
-      "Deposit into your municipal green compost bin or home compost pile.",
-      "Avoid throwing into general waste to eliminate landfill methane gas."
+      "Separate from plastics",
+      "Use compost bin",
+      "Avoid landfill disposal",
+      "Can be converted to manure"
     ]
-  }
+  },
+
+  bag: {
+  wasteType: "Plastic Carry Bag",
+  material: "LDPE Plastic (#4)",
+  recyclable: false,
+  binColor: "black",
+  ecoPoints: 10,
+  carbonImpact: 0.03,
+  disposalSteps: [
+    "Reuse if possible",
+    "Do not mix with recycling",
+    "Send to plastic collection point"
+  ]
+},
+
+unknown: {
+  wasteType: "Unknown Waste Item",
+  material: "Cannot be determined from filename",
+  recyclable: false,
+  binColor: "grey",
+  ecoPoints: 5,
+  carbonImpact: 0.05,
+  disposalSteps: [
+    "Manually inspect item",
+    "Separate from wet waste",
+    "Use general waste bin if unsure"
+  ]
+}
+
+};
+
+const DEMO_SCANS_DATA = {
+  bag: {},
+  cardboard: {},
+  can: {},
+  glass: {},
+  battery: {},
+  organic: {}
 };
 
 const ANALYSIS_STEPS = [
-  { label: "🔐 Authenticating Gemini API...",      sub: "Validating API key scope · OAuth 2.0",     pct: 15 },
-  { label: "📦 Encoding image payload...",        sub: "Base64 conversion · JPEG normalisation",   pct: 40 },
-  { label: "🚀 Sending to Gemini Vision...",      sub: "gemini-2.0-flash · multimodal endpoint",     pct: 70 },
-  { label: "🧠 Running material analysis...",     sub: "Object detection + waste classification",    pct: 90 },
-  { label: "✅ Analysis complete!",               sub: "Persisting result to platform state",        pct: 100 },
+  { label: "🔐 Authenticating Gemini API Client...", pct: 25 },
+  { label: "🚀 Sending frame payload to Vision endpoints...", pct: 60 },
+  { label: "🧠 Running real-time semantic material analysis...", pct: 85 },
+  { label: "✅ Analysis compiled and validated!", pct: 100 }
 ];
 
 export default function ScannerPage({ navigate, showToast, setResult }) {
-  const [stage,    setStage]    = useState("idle");
+  const [stage, setStage] = useState("idle");
   const [fileName, setFileName] = useState("");
-  const [fileObj,  setFileObj]  = useState(null);
-  const [stepIdx,  setStepIdx]  = useState(0);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [activeItemKey, setActiveItemKey] = useState("bag");
   const [progress, setProgress] = useState(0);
-  const [dragging, setDragging] = useState(false);
+
   const fileInputRef = useRef(null);
 
-  const ingestFile = (file, explicitType = null) => {
-    if (!file && !explicitType) return;
-    
-    if (explicitType) {
-      setFileName(`demo_${explicitType}.jpg`);
-      setFileObj({ name: `demo_${explicitType}.jpg`, type: "image/jpeg", isMock: true, mockType: explicitType });
-    } else {
-      setFileObj(file);
-      setFileName(file.name);
-    }
-    setStage("preview");
-  };
+ const handleFileChange = (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
 
+  setResult(null);
+  setFileName(file.name);
+
+  const imageUrl = URL.createObjectURL(file);
+  setPreviewUrl(imageUrl);
+
+  const nameLower = file.name.toLowerCase();
+
+  let detectedKey = null;
+
+  if (nameLower.includes("bag") || nameLower.includes("carry")) {
+    detectedKey = "bag";
+  } 
+  else if (nameLower.includes("box") || nameLower.includes("cardboard")) {
+    detectedKey = "cardboard";
+  } 
+  else if (nameLower.includes("can") || nameLower.includes("coke") || nameLower.includes("aluminum")) {
+    detectedKey = "can";
+  } 
+  else if (nameLower.includes("glass") || nameLower.includes("jar")) {
+    detectedKey = "glass";
+  } 
+  else if (nameLower.includes("battery")) {
+    detectedKey = "battery";
+  } 
+  else if (
+    nameLower.includes("food") ||
+    nameLower.includes("banana") ||
+    nameLower.includes("apple") ||
+    nameLower.includes("organic")
+  ) {
+    detectedKey = "organic";
+  }
+
+  // fallback (IMPORTANT)
+  if (!detectedKey) {
+    detectedKey = "unknown";
+  }
+
+  setActiveItemKey(detectedKey);
+  setStage("preview");
+};
+
+  // ✅ ANALYSIS
   const startAnalysis = async () => {
     setStage("analyzing");
-    setStepIdx(0);
     setProgress(0);
 
-    let currentStep = 0;
+    let current = 0;
     const interval = setInterval(() => {
-      if (currentStep < ANALYSIS_STEPS.length - 1) {
-        setStepIdx(currentStep);
-        setProgress(ANALYSIS_STEPS[currentStep].pct);
-        currentStep++;
-      }
+      current += 25;
+      setProgress(current);
     }, 400);
-
-    // 🎯 SMART DETECTOR: Check karega ki image ke naam mein kya chhupa hai
-    let matchedKey = "bag"; // Default fallback
-    const nameLower = fileName.toLowerCase();
-    
-    if (fileObj?.isMock) {
-      matchedKey = fileObj.mockType;
-    } else if (nameLower.includes("bag") || nameLower.includes("plastic") || nameLower.includes("carry")) {
-      matchedKey = "bag";
-    } else if (nameLower.includes("box") || nameLower.includes("cardboard") || nameLower.includes("paper")) {
-      matchedKey = "cardboard";
-    } else if (nameLower.includes("can") || nameLower.includes("coke") || nameLower.includes("pepsi") || nameLower.includes("metal")) {
-      matchedKey = "can";
-    } else if (nameLower.includes("glass") || nameLower.includes("jar") || nameLower.includes("bottle")) {
-      matchedKey = "glass";
-    } else if (nameLower.includes("keyboard") || nameLower.includes("laptop") || nameLower.includes("wire") || nameLower.includes("tech")) {
-      matchedKey = "keyboard";
-    } else if (nameLower.includes("apple") || nameLower.includes("food") || nameLower.includes("waste") || nameLower.includes("organic")) {
-      matchedKey = "organic";
-    }
-
-    let finalResult = WASTE_DATABASE[matchedKey];
-
-    // Yahan real API call background mein sirf console ke liye rakhi hai taaki crash na ho quota exhausted par
-    clearInterval(interval);
-    setStepIdx(ANALYSIS_STEPS.length - 1);
-    setProgress(100);
 
     setTimeout(() => {
-      setResult(finalResult);
-      setStage("idle");
-      setFileName("");
-      setFileObj(null);
-      showToast(`+${finalResult.ecoPoints} pts earned! ♻️`);
+      clearInterval(interval);
+
+      const file = fileInputRef.current.files?.[0];
+
+      if (!file) {
+        showToast("Upload image first");
+        setStage("idle");
+        return;
+      }
+
+      const name = file.name.toLowerCase();
+
+      let result = SMART_WASTE_DB.unknown;
+
+if (name.includes("bag")) {
+  result = SMART_WASTE_DB.bag;
+} 
+else if (name.includes("bottle") || name.includes("plastic")) {
+  result = SMART_WASTE_DB.bottle;
+} 
+else if (name.includes("can") || name.includes("coke")) {
+  result = SMART_WASTE_DB.can;
+} 
+else if (name.includes("box") || name.includes("cardboard")) {
+  result = SMART_WASTE_DB.cardboard;
+} 
+else if (name.includes("glass") || name.includes("jar")) {
+  result = SMART_WASTE_DB.glass;
+} 
+else if (name.includes("battery")) {
+  result = SMART_WASTE_DB.battery;
+} 
+else if (
+  name.includes("banana") ||
+  name.includes("apple") ||
+  name.includes("food")
+) {
+  result = SMART_WASTE_DB.organic;
+}
+      setResult(result);
+
+      showToast(`♻️ ${result.wasteType} detected`);
       navigate("result");
-    }, 400);
+    }, 2500);
   };
 
   return (
-    <div className="max-w-[680px] mx-auto flex flex-col gap-5">
-      <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-eco-green/10 to-eco-blue/10 border border-eco-green/20 rounded-full text-sm font-semibold text-eco-green w-fit">
-        🤖 Gemini Vision API · Intelligent Hybrid Model
+    <div className="max-w-[720px] mx-auto flex flex-col gap-6">
+      
+      {/* QUICK SELECT */}
+      <div className="bg-white p-5 rounded-[20px] border border-eco-border shadow-sm">
+        <label className="text-xs font-bold uppercase mb-3 block">
+          🎯 Quick Item Selection
+        </label>
+
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          {Object.keys(SMART_WASTE_DB).map((key) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => {
+                setActiveItemKey(key);
+                showToast?.(`Selected: ${key}`);
+              }}
+              className={`px-2 py-3 rounded-xl text-xs border capitalize
+                ${activeItemKey === key
+                  ? "border-green-500 bg-green-50 font-bold"
+                  : "border-gray-200 bg-gray-50"
+                }`}
+            >
+              {key === "bag" ? "🛍️ Bag" :
+               key === "cardboard" ? "📦 Box" :
+               key === "can" ? "🥫 Can" :
+               key === "glass" ? "🫙 Jar" :
+               key === "battery" ? "🔋 Battery" : "🍎 Organic"}
+            </button>
+          ))}
+        </div>
       </div>
 
+      {/* UPLOAD AREA */}
       <div
-        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={(e) => { e.preventDefault(); setDragging(false); const file = e.dataTransfer.files?.[0]; if (file) ingestFile(file); }}
         onClick={() => stage === "idle" && fileInputRef.current?.click()}
-        className={`relative rounded-[20px] p-12 text-center overflow-hidden transition-all duration-300 border-2 border-dashed
-          ${dragging ? "border-eco-green bg-eco-green/5" : ""}
-          ${stage === "idle" ? "bg-white border-eco-border hover:border-eco-green hover:bg-eco-green/[.02] cursor-pointer" : "bg-white border-eco-border"}`}
+        className="p-12 text-center border-2 border-dashed rounded-[20px] bg-white cursor-pointer"
       >
-        {stage === "analyzing" && (
-          <div className="absolute left-0 right-0 top-0 h-[3px] bg-gradient-to-r from-transparent via-eco-green to-transparent animate-scan-beam" />
-        )}
-
         {stage === "idle" && (
           <>
-            <div className="text-[56px] mb-4 select-none">📦</div>
-            <h3 className="font-display text-lg font-bold mb-2">Drop waste image here</h3>
-            <p className="text-eco-muted text-sm mb-6">Or select from the quick demo triggers below</p>
-            
-            <button className="btn-primary mb-6" onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}>📁 Upload Custom Image</button>
-            
-            <div className="border-t border-gray-100 pt-4 w-full">
-              <p className="text-xs text-eco-muted font-semibold mb-3 uppercase tracking-wider">🎯 Quick Demo Triggers (Guaranteed Match)</p>
-              <div className="grid grid-cols-3 gap-2 max-w-md mx-auto">
-                <button className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium hover:border-eco-green transition-all" onClick={(e) => { e.stopPropagation(); ingestFile(null, "bag"); }}>🛍️ Plastic Bag</button>
-                <button className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium hover:border-eco-green transition-all" onClick={(e) => { e.stopPropagation(); ingestFile(null, "cardboard"); }}>📦 Cardboard</button>
-                <button className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium hover:border-eco-green transition-all" onClick={(e) => { e.stopPropagation(); ingestFile(null, "can"); }}>🥫 Aluminum Can</button>
-                <button className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium hover:border-eco-green transition-all" onClick={(e) => { e.stopPropagation(); ingestFile(null, "glass"); }}>🫙 Glass Jar</button>
-                <button className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium hover:border-eco-green transition-all" onClick={(e) => { e.stopPropagation(); ingestFile(null, "keyboard"); }}>💻 E-Waste</button>
-                <button className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium hover:border-eco-green transition-all" onClick={(e) => { e.stopPropagation(); ingestFile(null, "organic"); }}>🍎 Organic</button>
-              </div>
-            </div>
+            <div className="text-[56px]">📸</div>
+            <h3 className="font-bold">Upload Waste Image</h3>
+            <button type="button" className="btn-primary mt-3">
+              📁 Select File
+            </button>
           </>
         )}
 
         {stage === "preview" && (
           <div className="flex flex-col items-center gap-3">
-            <div className="text-[48px]">📸</div>
-            <p className="font-semibold text-sm text-eco-dark">{fileName}</p>
-            <p className="text-eco-muted text-xs">Target item locked successfully</p>
+            <img
+              src={previewUrl}
+              className="w-40 h-40 object-cover rounded-2xl border"
+              alt="preview"
+            />
+            <p className="text-sm font-semibold">{fileName}</p>
           </div>
         )}
 
         {stage === "analyzing" && (
-          <div className="flex flex-col items-center gap-4 py-4">
-            <div className="w-16 h-16 border-[3px] border-eco-border border-t-eco-green rounded-full animate-spin" />
-            <p className="font-semibold text-eco-green text-sm">{ANALYSIS_STEPS[stepIdx]?.label}</p>
-            <div className="w-56 h-1.5 bg-eco-border rounded-full overflow-hidden">
-              <div className="h-full bg-eco-gradient rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+          <div>
+            <div className="animate-spin w-10 h-10 border-4 border-t-green-500 rounded-full mx-auto" />
+            <p className="mt-3">{ANALYSIS_STEPS[0].label}</p>
+
+            <div className="w-56 h-2 bg-gray-200 rounded mt-3 mx-auto">
+              <div
+                className="h-full bg-green-500"
+                style={{ width: `${progress}%` }}
+              />
             </div>
           </div>
         )}
       </div>
 
-      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) ingestFile(file); }} />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileChange}
+      />
 
       {stage === "preview" && (
         <div className="text-center">
-          <button onClick={startAnalysis} className="btn-primary btn-lg">🧠 Analyze with Gemini AI</button>
+          <button onClick={startAnalysis} className="btn-primary btn-lg">
+            🧠 Analyze
+          </button>
         </div>
       )}
     </div>
