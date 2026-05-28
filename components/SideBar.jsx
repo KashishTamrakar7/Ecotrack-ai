@@ -1,77 +1,83 @@
 "use client";
 
-const NAV = [
-  { section: "Main" },
-  { id: "dashboard",   icon: "🏠", label: "Dashboard" },
-  { id: "scanner",     icon: "📷", label: "AI Scanner",    badge: "AI" },
-  { id: "map",         icon: "🗺️", label: "Eco Map" },
-  { divider: true },
-  { section: "Personal" },
-  { id: "history",     icon: "📋", label: "Scan History" },
-  { id: "rewards",     icon: "🏆", label: "Rewards" },
-  { id: "leaderboard", icon: "🥇", label: "Leaderboard" },
-  { id: "analytics",   icon: "📊", label: "Analytics" },
-  { divider: true },
-  { section: "Admin" },
-  { id: "admin",       icon: "🏙️", label: "City Dashboard" },
-  { divider: true },
-  { id: "auth",        icon: "👤", label: "Account", bottom: true },
-];
+import { useState } from "react";
 
 export default function SideBar({ currentPage, navigate }) {
+  // 📱 Mobile par menu open/close karne ke liye state
+  const [isOpen, setIsOpen] = useState(false);
+
+  const menuItems = [
+    { id: "dashboard",   label: "📊 Dashboard" },
+    { id: "scanner",     label: "📸 AI Scanner" },
+    { id: "map",         label: "🗺️ Eco Map" },
+    { id: "analytics",   label: "📈 Analytics" },
+    { id: "leaderboard", label: "🏆 Leaderboard" },
+    { id: "rewards",     label: "🎁 Rewards" },
+    { id: "history",     label: "📜 Scan History" },
+  ];
+
   return (
-    <aside className="fixed top-0 left-0 h-screen w-[240px] bg-eco-dark flex flex-col z-50 overflow-y-auto">
-      {/* Logo */}
-      <div className="flex items-center gap-2.5 px-5 py-6 border-b border-white/[.08]">
-        <div className="w-9 h-9 rounded-xl bg-eco-gradient flex items-center justify-center text-lg">
-          🌿
+    <>
+      {/* 📱 MOBILE HEADER BAR: Yeh sirf mobile par dikhega aur top par menu button dega */}
+      <div className="md:hidden flex items-center justify-between bg-white border-b border-gray-200 p-4 sticky top-0 z-50 w-full">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">🌿</span>
+          <span className="font-bold text-gray-800 tracking-tight">EcoTrack AI</span>
         </div>
-        <span className="font-display text-white text-[17px] font-bold tracking-tight">
-          EcoTrack AI
-        </span>
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none"
+        >
+          {isOpen ? (
+            <span className="text-xl font-bold">✕</span> // Close Icon
+          ) : (
+            <span className="text-xl font-bold">☰</span> // Hamburger Menu Icon
+          )}
+        </button>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5">
-        {NAV.map((item, i) => {
-          if (item.section)
-            return (
-              <p key={i} className="text-[11px] font-semibold uppercase tracking-widest text-[#4A6B60] px-3 pt-4 pb-1">
-                {item.section}
-              </p>
-            );
-          if (item.divider)
-            return <hr key={i} className="border-white/[.07] my-2 mx-3" />;
+      {/* 🧭 NAVIGATION SIDEBAR: Desktop par fixed rahega, Mobile par slide-down hoga */}
+      <aside
+        className={`fixed top-[61px] md:top-0 left-0 h-[calc(100vh-61px)] md:h-screen w-full md:w-[240px] bg-white border-r border-gray-200 z-40 transition-transform duration-300 md:translate-x-0
+          ${isOpen ? "translate-x-0" : "-translate-x-full"}
+        `}
+      >
+        {/* Logo Section (Hidden on Mobile because of the mobile bar) */}
+        <div className="hidden md:flex items-center gap-3 px-6 py-6 border-b border-gray-100">
+          <span className="text-2xl">🌿</span>
+          <span className="font-bold text-xl text-gray-800 tracking-tight">EcoTrack AI</span>
+        </div>
 
-          const active = currentPage === item.id;
-          return (
+        {/* Menu Navigation Links */}
+        <nav className="p-4 flex flex-col gap-1.5 overflow-y-auto h-full pb-20">
+          {menuItems.map((item) => (
             <button
               key={item.id}
-              onClick={() => navigate(item.id)}
-              className={`nav-item w-full text-left ${active ? "nav-item-active" : ""}`}
+              type="button"
+              onClick={() => {
+                navigate(item.id);
+                setIsOpen(false); // Mobile par click karte hi menu automatic close ho jaye
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-left
+                ${currentPage === item.id
+                  ? "bg-green-50 text-green-700 font-bold shadow-sm"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                }`}
             >
-              <span className="text-[17px] w-5 text-center">{item.icon}</span>
-              <span className="flex-1">{item.label}</span>
-              {item.badge && (
-                <span className="ml-auto bg-eco-green text-white text-[10px] font-bold rounded-full px-2 py-0.5">
-                  {item.badge}
-                </span>
-              )}
+              {item.label}
             </button>
-          );
-        })}
-      </nav>
+          ))}
+        </nav>
+      </aside>
 
-      {/* User footer */}
-      <div className="px-4 py-4 border-t border-white/[.08] flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-eco-gradient flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-          AK
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-white text-sm font-semibold truncate">Alex Kumar</p>
-          <p className="text-eco-green text-[11px]">🌍 Planet Protector</p>
-        </div>
-      </div>
-    </aside>
+      {/* OVERLAY: Mobile par jab menu khule toh background thoda dark karne ke liye */}
+      {isOpen && (
+        <div
+          onClick={() => setIsOpen(false)}
+          className="md:hidden fixed inset-0 bg-black/20 z-30 transition-opacity"
+        />
+      )}
+    </>
   );
 }

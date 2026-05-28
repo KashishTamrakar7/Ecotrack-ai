@@ -23,9 +23,8 @@ export default function Home() {
   const [result, setResult] = useState(null);
   const [notifOpen, setNotifOpen] = useState(false);
 
-  // 🎯 BROWSER BACK BUTTON FIX: Yeh browser ko back jaane se rokega aur app ke andar hi navigate karega
+  // 🎯 BROWSER BACK BUTTON FIX
   useEffect(() => {
-    // Shuruat mein history state reset karo
     window.history.replaceState({ page: "dashboard" }, "");
 
     const handlePopState = (event) => {
@@ -45,7 +44,6 @@ export default function Home() {
     setTimeout(() => setToast(null), 2800);
   };
 
-  // 🎯 NAVIGATION JADU: Jab bhi page badlega, browser ki history mein save hoga
   const navigate = (p) => {
     setPage(p);
     setNotifOpen(false);
@@ -72,10 +70,13 @@ export default function Home() {
       {isAuth ? (
         <div className="min-h-screen">{pages.auth}</div>
       ) : (
-        <div className="flex min-h-screen">
+        <div className="flex flex-col md:flex-row min-h-screen bg-gray-50 overflow-x-hidden">
+          
+          {/* Sidebar component wrapper */}
           <SideBar currentPage={page} navigate={navigate} />
 
-          <div className="ml-[240px] flex-1 min-h-screen">
+          {/* 📱 MOBILE RESPONSIVE WRAPPER: Fixed horizontal spacing padding */}
+          <div className="flex-1 min-h-screen w-full transition-all duration-300 md:ml-[240px]">
             <TopBar
               title={page === "result" ? "AI Analysis Result" : "EcoTrack AI"}
               subtitle={page === "result" ? "AI analysis complete ✅" : "Identify & recycle smarter"}
@@ -84,7 +85,9 @@ export default function Home() {
               setNotifOpen={setNotifOpen}
               showToast={showToast}
             />
-            <main className="p-8 animate-fade-in-up">
+            
+            {/* Main view injection with safe responsive paddings */}
+            <main className="p-3 sm:p-6 md:p-8 max-w-full overflow-hidden animate-fade-in-up">
               {pages[page] ?? pages.dashboard}
             </main>
           </div>
