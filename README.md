@@ -1,6 +1,6 @@
 # 🌿 EcoTrack AI 
 
-🔗 **[Live Demo Link](https://ecotrack-ai-n6v1.vercel.app/)**
+🔗 **[Live Demo Link](https://ecotrack-ai-3r1f.vercel.app/)**
 
 EcoTrack AI is a smart sustainability platform designed to improve urban waste management using AI, real-time tracking, and location-based recycling insights.
 
